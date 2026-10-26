@@ -7,32 +7,32 @@
 
   var HEADERS = {
     tcp: {
-      label: "Segment TCP",
+      label: "Segmento TCP",
       sizeNote: "20 a 60 bytes",
       rowBasis: 32,
       rows: [
         [
-          {name:"Port origen", bits:16, syn:["port origen","puerto origen","source port","port d'origen"]},
-          {name:"Port desti", bits:16, syn:["port desti","port destí","puerto destino","dest port","destination port"]}
+          {name:"Puerto origen", bits:16, syn:["port origen","puerto origen","source port","port d'origen"]},
+          {name:"Puerto destino", bits:16, syn:["port desti","port destí","puerto destino","dest port","destination port"]}
         ],
         [
-          {name:"Numero de seqüencia", bits:32, syn:["numero de secuencia","numero de seqüència","nombre de secuencia","sequence number","num seqüencia","num secuencia"]}
+          {name:"Numero de secuencia", bits:32, syn:["numero de secuencia","numero de seqüencia","numero de seqüència","nombre de secuencia","sequence number","num seqüencia","num secuencia"]}
         ],
         [
-          {name:"Numero d'acknowledgement", bits:32, syn:["numero de ack","numero d'acknowledgement","numero de reconocimiento","ack number","acknowledgement number","num ack"]}
+          {name:"Numero de confirmacion (ACK)", bits:32, syn:["numero de ack","numero d'acknowledgement","numero de confirmacion","numero de reconocimiento","ack number","acknowledgement number","num ack"]}
         ],
         [
-          {name:"Long. capçalera", bits:4, syn:["longitud cabecera","longitud de cabecera","data offset","offset","long capçalera","long. capçalera"]},
-          {name:"Reservat", bits:6, syn:["reservado","reserved","reservat"]},
-          {name:"Flags", bits:6, syn:["flags","banderas","indicadors"]},
-          {name:"Finestra", bits:16, syn:["ventana","window","finestra","tamaño de ventana","mida de finestra","window size"]}
+          {name:"Longitud de cabecera", bits:4, syn:["longitud cabecera","longitud de cabecera","data offset","offset","long capçalera","long. capçalera"]},
+          {name:"Reservado", bits:6, syn:["reservado","reserved","reservat"]},
+          {name:"Banderas", bits:6, syn:["flags","banderas","indicadors"]},
+          {name:"Ventana", bits:16, syn:["ventana","window","finestra","tamaño de ventana","mida de finestra","window size"]}
         ],
         [
-          {name:"Checksum", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]},
-          {name:"Punter dades urgents", bits:16, syn:["puntero urgente","urgent pointer","punter urgent","punter dades urgents"]}
+          {name:"Suma de verificacion", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]},
+          {name:"Puntero de datos urgentes", bits:16, syn:["puntero urgente","urgent pointer","punter urgent","punter dades urgents","puntero de datos urgentes"]}
         ],
         [
-          {name:"Opcions", bits:32, syn:["opciones","options","opcions"]}
+          {name:"Opciones", bits:32, syn:["opciones","options","opcions"]}
         ]
       ]
     },
@@ -42,44 +42,44 @@
       rowBasis: 32,
       rows: [
         [
-          {name:"Port origen", bits:16, syn:["port origen","puerto origen","source port"]},
-          {name:"Port desti", bits:16, syn:["port desti","port destí","puerto destino","destination port"]}
+          {name:"Puerto origen", bits:16, syn:["port origen","puerto origen","source port"]},
+          {name:"Puerto destino", bits:16, syn:["port desti","port destí","puerto destino","destination port"]}
         ],
         [
           {name:"Longitud", bits:16, syn:["longitud","length","llargada"]},
-          {name:"Checksum", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]}
+          {name:"Suma de verificacion", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]}
         ]
       ]
     },
     ip: {
-      label: "Paquet IPv4",
+      label: "Paquete IPv4",
       sizeNote: "20 a 60 bytes",
       rowBasis: 32,
       rows: [
         [
-          {name:"Versio", bits:4, syn:["version","versio","versió"]},
-          {name:"IHL", bits:4, syn:["ihl","longitud de cabecera internet","internet header length"]},
+          {name:"Version", bits:4, syn:["version","versio","versió"]},
+          {name:"IHL", bits:4, syn:["ihl","longitud de cabecera internet","internet header length","longitud de cabecera ip"]},
           {name:"ToS / DSCP", bits:8, syn:["tos","dscp","tipo de servicio","type of service","tos/dscp"]},
           {name:"Longitud total", bits:16, syn:["longitud total","total length"]}
         ],
         [
-          {name:"Identificacio", bits:16, syn:["identificacion","identificació","identification"]},
-          {name:"Flags", bits:3, syn:["flags","banderas","indicadors"]},
-          {name:"Desplaçament", bits:13, syn:["desplazamiento","offset","fragment offset","desplaçament"]}
+          {name:"Identificacion", bits:16, syn:["identificacion","identificació","identification"]},
+          {name:"Banderas", bits:3, syn:["flags","banderas","indicadors"]},
+          {name:"Desplazamiento", bits:13, syn:["desplazamiento","offset","fragment offset","desplaçament"]}
         ],
         [
-          {name:"TTL", bits:8, syn:["ttl","time to live","temps de vida"]},
-          {name:"Protocol", bits:8, syn:["protocolo","protocol"]},
-          {name:"Checksum", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]}
+          {name:"TTL", bits:8, syn:["ttl","time to live","temps de vida","tiempo de vida"]},
+          {name:"Protocolo", bits:8, syn:["protocolo","protocol"]},
+          {name:"Suma de verificacion", bits:16, syn:["checksum","suma de verificacion","suma de comprovacio"]}
         ],
         [
-          {name:"Adreça IP origen", bits:32, syn:["ip origen","direccion ip origen","adreça ip origen","source ip","source address"]}
+          {name:"Direccion IP origen", bits:32, syn:["ip origen","direccion ip origen","adreça ip origen","source ip","source address"]}
         ],
         [
-          {name:"Adreça IP desti", bits:32, syn:["ip destino","direccion ip destino","adreça ip desti","adreça ip destí","destination ip","destination address"]}
+          {name:"Direccion IP destino", bits:32, syn:["ip destino","direccion ip destino","adreça ip desti","adreça ip destí","destination ip","destination address"]}
         ],
         [
-          {name:"Opcions", bits:32, syn:["opciones","options","opcions"]}
+          {name:"Opciones", bits:32, syn:["opciones","options","opcions"]}
         ]
       ]
     },
@@ -89,10 +89,10 @@
       rowBasis: null, // single row, proportional by raw bits (payload uses a representative width)
       rows: [
         [
-          {name:"MAC desti", bits:48, syn:["mac destino","mac desti","mac destí","destination mac"]},
+          {name:"MAC destino", bits:48, syn:["mac destino","mac desti","mac destí","destination mac"]},
           {name:"MAC origen", bits:48, syn:["mac origen","source mac"]},
-          {name:"Tipus / Longitud", bits:16, syn:["tipo","ethertype","type/length","tipus","tipus/longitud","tipo/longitud"]},
-          {name:"Dades", bits:160, payload:true, note:"46-1500 bytes"},
+          {name:"Tipo / Longitud", bits:16, syn:["tipo","ethertype","type/length","tipus","tipus/longitud","tipo/longitud"]},
+          {name:"Datos", bits:160, payload:true, note:"46-1500 bytes"},
           {name:"CRC", bits:32, syn:["crc","fcs","frame check sequence"]}
         ]
       ]
@@ -189,28 +189,37 @@
     return prev[n];
   }
 
-  // Returns {status:'exact'|'near'|'wrong', matched:string|null}
+  var SIMILARITY_THRESHOLD = 0.8; // 80% de letras correctas ya cuenta como acierto
+
+  function similarity(a, b){
+    var dist = levenshtein(a, b);
+    var maxLen = Math.max(a.length, b.length);
+    if(maxLen === 0) return 1;
+    return 1 - (dist / maxLen);
+  }
+
+  // Returns {status:'exact'|'near'|'wrong', matched:string|null, pct:number}
   function checkAnswer(field, userInput){
     var norm = normalize(userInput);
-    if(norm === '') return {status:'wrong', matched:null};
+    if(norm === '') return {status:'wrong', matched:null, pct:0};
 
     var candidates = [field.name].concat(field.syn || []).map(normalize);
 
     if(candidates.indexOf(norm) !== -1){
-      return {status:'exact', matched:field.name};
+      return {status:'exact', matched:field.name, pct:100};
     }
 
-    // typo tolerance: allow small edit distance relative to word length
-    var best = null, bestDist = Infinity;
+    // tolerancia por similitud: si coincide un 80% o mas de las letras con
+    // cualquier respuesta valida, se acepta como correcta (con aviso de ortografia)
+    var bestSim = 0;
     candidates.forEach(function(c){
-      var dist = levenshtein(norm, c);
-      if(dist < bestDist){ bestDist = dist; best = c; }
+      var sim = similarity(norm, c);
+      if(sim > bestSim) bestSim = sim;
     });
-    var allowed = Math.max(1, Math.floor(best.length * 0.22));
-    if(bestDist > 0 && bestDist <= allowed){
-      return {status:'near', matched:field.name};
+    if(bestSim >= SIMILARITY_THRESHOLD){
+      return {status:'near', matched:field.name, pct:Math.round(bestSim*100)};
     }
-    return {status:'wrong', matched:null};
+    return {status:'wrong', matched:null, pct:Math.round(bestSim*100)};
   }
 
   function allQuizzableFields(header){
@@ -350,7 +359,7 @@
       } else if(result.status === 'near'){
         correctCount++; nearCount++;
         box.classList.add('near');
-        box.innerHTML = '<div class="f-label">' + field.name + '</div><div class="f-note">ortografia: casi perfecta</div>';
+        box.innerHTML = '<div class="f-label">' + field.name + '</div><div class="f-note">' + result.pct + '% de coincidencia</div>';
       } else {
         box.classList.add('wrong');
         box.innerHTML = '<div class="f-label">' + (input.value.trim() || '(vacio)') + '</div>' +
