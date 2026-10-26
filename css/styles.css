@@ -153,6 +153,18 @@ h1,h2,h3{ font-family:"Sora","IBM Plex Sans",sans-serif; text-wrap:balance; marg
 .field.wrong{ background:var(--error-bg); border-color:var(--error); animation:shake .4s ease; }
 .field.wrong .f-correct{ font-size:10.5px; color:var(--error); margin-top:4px; font-weight:600; }
 
+.field.near{ background:#FFF7E6; border-color:#D97706; animation:popCorrect .35s ease; }
+.field.near .f-label{ color:#B45309; }
+.field.near .f-note{ font-size:10px; color:#B45309; margin-top:3px; font-weight:600; }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .field.near{ background:rgba(217,119,6,.14); border-color:#F59E0B; }
+  :root:not([data-theme="light"]) .field.near .f-label,
+  :root:not([data-theme="light"]) .field.near .f-note{ color:#FBBF24; }
+}
+:root[data-theme="dark"] .field.near{ background:rgba(217,119,6,.14); border-color:#F59E0B; }
+:root[data-theme="dark"] .field.near .f-label,
+:root[data-theme="dark"] .field.near .f-note{ color:#FBBF24; }
+
 @keyframes popCorrect{ 0%{ transform:scale(1); } 40%{ transform:scale(1.06); } 100%{ transform:scale(1); } }
 @keyframes shake{
   0%,100%{ transform:translateX(0); }
@@ -184,6 +196,22 @@ h1,h2,h3{ font-family:"Sora","IBM Plex Sans",sans-serif; text-wrap:balance; marg
 .result-msg.bad{ background:var(--error-bg); color:var(--error); }
 .result-msg.mid{ background:var(--surface-2); color:var(--text-muted); }
 @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+
+.weak-panel{
+  margin-top:16px; padding-top:16px; border-top:1px dashed var(--border);
+  animation:fadeIn .3s ease;
+}
+.weak-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.weak-title{ font-size:13px; font-weight:600; color:var(--text-muted); }
+.btn.ghost.small{ padding:7px 12px; font-size:12.5px; }
+.weak-list{ display:flex; flex-direction:column; gap:6px; }
+.weak-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:8px; padding:8px 12px; font-size:12.5px;
+}
+.weak-row .wr-name{ font-weight:500; }
+.weak-row .wr-pct{ font-family:"IBM Plex Mono",monospace; color:var(--error); font-weight:600; white-space:nowrap; }
 
 .ref-card{ margin-top:16px; }
 .ref-title{ font-size:14px; margin-bottom:12px; }

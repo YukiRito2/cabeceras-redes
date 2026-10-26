@@ -106,12 +106,12 @@
     current: "tcp",
     blanks: {},      // fieldKey -> true/false (is this field blanked this round)
     checked: false,
-    totalAttempts: 0,
-    totalCorrect: 0
+    forcedKeys: null  // when set, next practice blanks exactly these field keys (drill mode)
   };
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ---------- session totals (simple badge) ----------
   function getStats(){
     try{
       var v = localStorage.getItem('cabeceras_stats');
@@ -126,6 +126,38 @@
     document.getElementById('stat-text').textContent = s.correct + ' aciertos / ' + s.attempts + ' intentos';
   }
 
+  // ---------- per-field accuracy (spaced-repetition style weighting) ----------
+  // Stored as { "tcp_0_0": {c:correctCount, w:wrongCount}, ... } across all headers.
+  function getFieldStats(){
+    try{
+      var v = localStorage.getItem('cabeceras_field_stats');
+      return v ? JSON.parse(v) : {};
+    }catch(e){ return {}; }
+  }
+  function saveFieldStats(s){
+    try{ localStorage.setItem('cabeceras_field_stats', JSON.stringify(s)); }catch(e){}
+  }
+  function fieldKey(headerKey, ri, fi){ return headerKey + '_' + ri + '_' + fi; }
+
+  function recordFieldResult(headerKey, ri, fi, wasCorrect){
+    var fs = getFieldStats();
+    var k = fieldKey(headerKey, ri, fi);
+    if(!fs[k]) fs[k] = {c:0, w:0};
+    if(wasCorrect) fs[k].c++; else fs[k].w++;
+    saveFieldStats(fs);
+  }
+
+  function headerAccuracy(headerKey){
+    var fs = getFieldStats();
+    var c = 0, w = 0;
+    Object.keys(fs).forEach(function(k){
+      if(k.indexOf(headerKey + '_') === 0){ c += fs[k].c; w += fs[k].w; }
+    });
+    if(c + w === 0) return null;
+    return c / (c + w);
+  }
+
+  // ---------- fuzzy, typo-tolerant answer checking ----------
   function normalize(str){
     return str
       .toLowerCase()
@@ -135,11 +167,50 @@
       .trim();
   }
 
-  function isAnswerCorrect(field, userInput){
+  function levenshtein(a, b){
+    var m = a.length, n = b.length;
+    if(m === 0) return n;
+    if(n === 0) return m;
+    var prev = new Array(n+1);
+    var curr = new Array(n+1);
+    for(var j=0;j<=n;j++) prev[j] = j;
+    for(var i=1;i<=m;i++){
+      curr[0] = i;
+      for(var j2=1;j2<=n;j2++){
+        var cost = a.charAt(i-1) === b.charAt(j2-1) ? 0 : 1;
+        curr[j2] = Math.min(
+          prev[j2] + 1,      // deletion
+          curr[j2-1] + 1,    // insertion
+          prev[j2-1] + cost  // substitution
+        );
+      }
+      var tmp = prev; prev = curr; curr = tmp;
+    }
+    return prev[n];
+  }
+
+  // Returns {status:'exact'|'near'|'wrong', matched:string|null}
+  function checkAnswer(field, userInput){
     var norm = normalize(userInput);
-    if(norm === '') return false;
+    if(norm === '') return {status:'wrong', matched:null};
+
     var candidates = [field.name].concat(field.syn || []).map(normalize);
-    return candidates.indexOf(norm) !== -1;
+
+    if(candidates.indexOf(norm) !== -1){
+      return {status:'exact', matched:field.name};
+    }
+
+    // typo tolerance: allow small edit distance relative to word length
+    var best = null, bestDist = Infinity;
+    candidates.forEach(function(c){
+      var dist = levenshtein(norm, c);
+      if(dist < bestDist){ bestDist = dist; best = c; }
+    });
+    var allowed = Math.max(1, Math.floor(best.length * 0.22));
+    if(bestDist > 0 && bestDist <= allowed){
+      return {status:'near', matched:field.name};
+    }
+    return {status:'wrong', matched:null};
   }
 
   function allQuizzableFields(header){
@@ -152,13 +223,51 @@
     return list;
   }
 
-  function pickBlanks(header){
+  // Weighted sampling without replacement: fields you get wrong more often,
+  // and fields you've never tried, show up more; fields you've mastered fade out.
+  function weightedSample(items, weights, k){
+    var pool = items.map(function(it, i){ return {it:it, w:Math.max(weights[i], 0.02)}; });
+    var chosen = [];
+    for(var s=0; s<k && pool.length>0; s++){
+      var total = pool.reduce(function(a,p){ return a+p.w; }, 0);
+      var r = Math.random()*total;
+      var acc = 0, idx = pool.length-1;
+      for(var i=0;i<pool.length;i++){ acc += pool[i].w; if(r <= acc){ idx = i; break; } }
+      chosen.push(pool[idx].it);
+      pool.splice(idx, 1);
+    }
+    return chosen;
+  }
+
+  function pickBlanks(headerKey, header){
     var fields = allQuizzableFields(header);
     var n = fields.length;
-    var blankCount = Math.max(2, Math.round(n * (0.55 + Math.random()*0.2)));
-    blankCount = Math.min(blankCount, n);
-    var shuffled = fields.slice().sort(function(){ return Math.random()-0.5; });
-    var chosen = shuffled.slice(0, blankCount);
+
+    // drill mode: force exactly the requested weak fields
+    if(state.forcedKeys){
+      var forced = state.forcedKeys;
+      state.forcedKeys = null;
+      var map0 = {};
+      forced.forEach(function(k){ map0[k] = true; });
+      return map0;
+    }
+
+    var fs = getFieldStats();
+    var weights = fields.map(function(f){
+      var k = fieldKey(headerKey, f.row, f.idx);
+      var rec = fs[k];
+      if(!rec || rec.c + rec.w === 0) return 0.55; // unseen: moderate priority, keep exploring
+      var acc = rec.c / (rec.c + rec.w);
+      return (1 - acc) * 0.85 + 0.08; // weak fields -> closer to ~0.9, mastered -> closer to ~0.08
+    });
+    // small jitter so it's not 100% deterministic (keeps variety between rounds)
+    weights = weights.map(function(w){ return w + Math.random()*0.25; });
+
+    var acc = headerAccuracy(headerKey);
+    var frac = acc === null ? 0.5 : Math.min(0.85, Math.max(0.35, 0.3 + acc*0.55));
+    var blankCount = Math.min(n, Math.max(2, Math.round(n*frac)));
+
+    var chosen = weightedSample(fields, weights, blankCount);
     var map = {};
     chosen.forEach(function(c){ map[c.row + '_' + c.idx] = true; });
     return map;
@@ -221,7 +330,7 @@
     var inputs = document.querySelectorAll('.field.blank input');
     if(inputs.length === 0) return;
 
-    var correctCount = 0;
+    var correctCount = 0, nearCount = 0;
     var total = inputs.length;
 
     inputs.forEach(function(input){
@@ -229,11 +338,19 @@
       var fi = parseInt(input.dataset.idx, 10);
       var field = header.rows[ri][fi];
       var box = input.closest('.field');
-      var ok = isAnswerCorrect(field, input.value);
-      if(ok){
+      var result = checkAnswer(field, input.value);
+
+      var wasCorrect = result.status === 'exact' || result.status === 'near';
+      recordFieldResult(key, ri, fi, wasCorrect);
+
+      if(result.status === 'exact'){
         correctCount++;
         box.classList.add('correct');
         box.innerHTML = '<div class="f-label">' + field.name + '</div><div class="f-bits">' + field.bits + ' bits</div>';
+      } else if(result.status === 'near'){
+        correctCount++; nearCount++;
+        box.classList.add('near');
+        box.innerHTML = '<div class="f-label">' + field.name + '</div><div class="f-note">ortografia: casi perfecta</div>';
       } else {
         box.classList.add('wrong');
         box.innerHTML = '<div class="f-label">' + (input.value.trim() || '(vacio)') + '</div>' +
@@ -252,17 +369,59 @@
     var msg = document.getElementById('result-msg');
     msg.hidden = false;
     var pct = Math.round((correctCount/total)*100);
+    var nearNote = nearCount>0 ? (' (' + nearCount + ' con pequeños errores de ortografia)') : '';
     if(pct === 100){
       msg.className = 'result-msg good';
-      msg.textContent = 'Perfecto: ' + correctCount + '/' + total + ' campos correctos. Dominas esta cabecera.';
+      msg.textContent = 'Perfecto: ' + correctCount + '/' + total + ' campos correctos' + nearNote + '. Dominas esta cabecera.';
       if(!reduceMotion) launchConfetti(110);
     } else if(pct >= 60){
       msg.className = 'result-msg mid';
-      msg.textContent = correctCount + '/' + total + ' campos correctos. Repasa los marcados en rojo.';
+      msg.textContent = correctCount + '/' + total + ' campos correctos' + nearNote + '. Repasa los marcados en rojo.';
     } else {
       msg.className = 'result-msg bad';
-      msg.textContent = correctCount + '/' + total + ' campos correctos. Toca repasar esta cabecera con calma.';
+      msg.textContent = correctCount + '/' + total + ' campos correctos' + nearNote + '. Toca repasar esta cabecera con calma.';
     }
+
+    renderWeakPanel(key, header);
+  }
+
+  function renderWeakPanel(headerKey, header){
+    var fs = getFieldStats();
+    var fields = allQuizzableFields(header);
+    var withAcc = fields.map(function(f){
+      var k = fieldKey(headerKey, f.row, f.idx);
+      var rec = fs[k];
+      if(!rec || rec.c + rec.w === 0) return null;
+      return {field:f, key:k, acc: rec.c/(rec.c+rec.w), attempts: rec.c+rec.w};
+    }).filter(function(x){ return x && x.acc < 1; });
+
+    withAcc.sort(function(a,b){ return a.acc - b.acc; });
+    var worst = withAcc.slice(0, 3);
+
+    var panel = document.getElementById('weak-panel');
+    var list = document.getElementById('weak-list');
+
+    if(worst.length === 0){
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+    list.innerHTML = '';
+    worst.forEach(function(w){
+      var row = document.createElement('div');
+      row.className = 'weak-row';
+      row.innerHTML =
+        '<span class="wr-name">' + w.field.field.name + '</span>' +
+        '<span class="wr-pct">' + Math.round(w.acc*100) + '% acierto</span>';
+      list.appendChild(row);
+    });
+
+    document.getElementById('drill-weak-btn').onclick = function(){
+      state.forcedKeys = worst.map(function(w){ return w.field.row + '_' + w.field.idx; });
+      state.blanks = pickBlanks(headerKey, header);
+      renderDiagram();
+    };
   }
 
   function revealAnswers(){
@@ -278,9 +437,11 @@
   }
 
   function newPractice(){
-    var header = HEADERS[state.current];
-    state.blanks = pickBlanks(header);
+    var key = state.current;
+    var header = HEADERS[key];
+    state.blanks = pickBlanks(key, header);
     renderDiagram();
+    document.getElementById('weak-panel').hidden = true;
   }
 
   function switchTab(key){
